@@ -1,12 +1,10 @@
-import { prisma } from "@/lib/db";
+import { prisma } from '@/lib/db';
+import { StreamStatus } from '@prisma/client';
 
 export class StreamService {
   static async getActiveStreams(limit: number = 20, offset: number = 0) {
     return prisma.stream.findMany({
-      where: { status: "LIVE" },
-      orderBy: { viewerCount: "desc" },
-      take: limit,
-      skip: offset,
+      where: { status: StreamStatus.LIVE },
       include: {
         creator: {
           select: {
@@ -16,19 +14,18 @@ export class StreamService {
           },
         },
       },
+      orderBy: { viewerCount: 'desc' },
+      take: limit,
+      skip: offset,
     });
   }
 
-  static async getStreamsByCategory(
-    category: string,
-    limit: number = 20,
-    offset: number = 0
-  ) {
+  static async getStreamsByCategory(category: string, limit: number = 20, offset: number = 0) {
     return prisma.stream.findMany({
-      where: { category, status: "LIVE" },
-      orderBy: { viewerCount: "desc" },
-      take: limit,
-      skip: offset,
+      where: {
+        category,
+        status: StreamStatus.LIVE,
+      },
       include: {
         creator: {
           select: {
@@ -38,6 +35,9 @@ export class StreamService {
           },
         },
       },
+      orderBy: { viewerCount: 'desc' },
+      take: limit,
+      skip: offset,
     });
   }
 
@@ -52,23 +52,40 @@ export class StreamService {
             avatar: true,
           },
         },
+        chatMessages: {
+          orderBy: { createdAt: 'asc' },
+          take: 50,
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
       },
     });
   }
 
-  static async createStream(
-    creatorId: string,
-    title: string,
-    description: string,
-    category: string
-  ) {
+  static async createStream(creatorId: string, title: string, description: string, category: string) {
     return prisma.stream.create({
       data: {
         creatorId,
         title,
         description,
         category,
-        status: "OFFLINE",
+        status: StreamStatus.OFFLINE,
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+          },
+        },
       },
     });
   }
@@ -77,7 +94,7 @@ export class StreamService {
     return prisma.stream.update({
       where: { id: streamId },
       data: {
-        status: "LIVE",
+        status: StreamStatus.LIVE,
         startedAt: new Date(),
       },
     });
@@ -87,30 +104,16 @@ export class StreamService {
     return prisma.stream.update({
       where: { id: streamId },
       data: {
-        status: "ENDED",
+        status: StreamStatus.ENDED,
         endedAt: new Date(),
       },
     });
   }
 
-  static async updateViewerCount(streamId: string, viewerCount: number) {
+  static async updateViewerCount(streamId: string, count: number) {
     return prisma.stream.update({
       where: { id: streamId },
-      data: { viewerCount },
-    });
-  }
-
-  static async getCreatorActiveStream(creatorId: string) {
-    return prisma.stream.findFirst({
-      where: { creatorId, status: "LIVE" },
-    });
-  }
-
-  static async getCreatorStreams(creatorId: string, limit: number = 20) {
-    return prisma.stream.findMany({
-      where: { creatorId },
-      orderBy: { createdAt: "desc" },
-      take: limit,
+      data: { viewerCount: count },
     });
   }
 }

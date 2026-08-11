@@ -1,27 +1,31 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/db";
-import bcrypt from "bcrypt";
+import { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { prisma } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error('Invalid credentials');
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        if (!user) {
-          throw new Error("User not found");
+        if (!user || !user.passwordHash) {
+          throw new Error('User not found');
+        }
+
+        if (user.suspended) {
+          throw new Error('User account is suspended');
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -30,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          throw new Error('Invalid password');
         }
 
         return {
@@ -38,6 +42,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           username: user.username,
           role: user.role,
+          image: user.avatar,
         };
       },
     }),
@@ -48,6 +53,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         token.username = (user as any).username;
+        token.image = user.image;
       }
       return token;
     },
@@ -61,10 +67,11 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login",
+    signIn: '/login',
   },
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  secret: process.env.AUTH_SECRET,
 };

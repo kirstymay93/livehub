@@ -1,9 +1,9 @@
-import { prisma } from "@/lib/db";
+import { prisma } from '@/lib/db';
 
 export class FollowService {
   static async follow(followerId: string, followingId: string) {
     if (followerId === followingId) {
-      throw new Error("Cannot follow yourself");
+      throw new Error('Cannot follow yourself');
     }
 
     return prisma.follow.create({
@@ -23,10 +23,7 @@ export class FollowService {
     });
   }
 
-  static async isFollowing(
-    followerId: string,
-    followingId: string
-  ): Promise<boolean> {
+  static async isFollowing(followerId: string, followingId: string) {
     const follow = await prisma.follow.findUnique({
       where: {
         followerId_followingId: {
@@ -35,25 +32,25 @@ export class FollowService {
         },
       },
     });
+
     return !!follow;
   }
 
-  static async getFollowerCount(userId: string): Promise<number> {
+  static async getFollowerCount(userId: string) {
     return prisma.follow.count({
       where: { followingId: userId },
     });
   }
 
-  static async getFollowingCount(userId: string): Promise<number> {
+  static async getFollowingCount(userId: string) {
     return prisma.follow.count({
       where: { followerId: userId },
     });
   }
 
-  static async getFollowers(userId: string, limit: number = 20) {
+  static async getFollowers(userId: string, limit: number = 50, offset: number = 0) {
     return prisma.follow.findMany({
       where: { followingId: userId },
-      take: limit,
       include: {
         follower: {
           select: {
@@ -63,22 +60,8 @@ export class FollowService {
           },
         },
       },
-    });
-  }
-
-  static async getFollowing(userId: string, limit: number = 20) {
-    return prisma.follow.findMany({
-      where: { followerId: userId },
       take: limit,
-      include: {
-        following: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-          },
-        },
-      },
+      skip: offset,
     });
   }
 }
