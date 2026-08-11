@@ -20,7 +20,7 @@ interface StreamHeaderProps {
 }
 
 const StreamHeader = ({
-  streamId,
+  streamId: _streamId,
   title,
   creatorName,
   creatorAvatar,

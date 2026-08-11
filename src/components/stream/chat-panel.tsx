@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
-import { chatService } from "@/lib/services/chat-service";
+import { ChatService } from "@/lib/services/chat-service";
 
 interface ChatMessage {
   id: string;
@@ -23,6 +22,21 @@ interface ChatPanelProps {
   streamId: string;
 }
 
+const toChatMessage = (message: {
+  id: string;
+  userId: string;
+  message: string;
+  createdAt: Date;
+  user: { username: string; avatar: string | null };
+}): ChatMessage => ({
+  id: message.id,
+  userId: message.userId,
+  username: message.user.username,
+  avatar: message.user.avatar || undefined,
+  message: message.message,
+  timestamp: new Date(message.createdAt),
+});
+
 const ChatPanel = ({ streamId }: ChatPanelProps) => {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -31,9 +45,23 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load initial messages
-    const initialMessages = chatService.getMessages(streamId);
-    setMessages(initialMessages);
+    let cancelled = false;
+
+    const loadMessages = async () => {
+      try {
+        const initialMessages = await ChatService.getMessages(streamId);
+        if (!cancelled) {
+          setMessages(initialMessages.map(toChatMessage));
+        }
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    };
+
+    loadMessages();
+    return () => {
+      cancelled = true;
+    };
   }, [streamId]);
 
   useEffect(() => {
@@ -50,15 +78,13 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
 
     setIsLoading(true);
     try {
-      const message = chatService.addMessage(
+      const message = await ChatService.addMessage(
         streamId,
         session.user.id!,
-        session.user.username || "Anonymous",
-        newMessage,
-        session.user.image || undefined
+        newMessage
       );
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, toChatMessage(message)]);
       setNewMessage("");
     } catch (error) {
       console.error("Failed to send message:", error);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         username,
-        passwordHash,
-        role: "USER",
+        password: passwordHash,
+        role: "VIEWER",
       },
     });
 

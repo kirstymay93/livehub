@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Github } from "lucide-react";
+import { GitFork } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -94,7 +94,7 @@ const Footer = () => {
               className="text-gray-400 hover:text-white transition-colors"
               aria-label="GitHub"
             >
-              <Github size={20} />
+              <GitFork size={20} />
             </a>
           </div>
         </div>

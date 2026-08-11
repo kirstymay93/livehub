@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -19,7 +19,7 @@ interface StreamCommentProps {
 }
 
 const StreamComment = ({
-  id,
+  id: _id,
   authorName,
   authorAvatar,
   content,
@@ -92,7 +92,7 @@ interface StreamCommentsProps {
   comments?: StreamCommentProps[];
 }
 
-const StreamComments = ({ streamId, comments = [] }: StreamCommentsProps) => {
+const StreamComments = ({ comments = [] }: StreamCommentsProps) => {
   const { data: session } = useSession();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
