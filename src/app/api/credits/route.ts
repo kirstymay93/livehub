@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { CreditService } from "@/lib/services/credit-service";
-import { tipSchema } from "@/lib/validators";
+import { tipRequestSchema } from "@/lib/validators";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -39,12 +39,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    const parsed = tipSchema.safeParse({
+    const idempotencyKey =
+      request.headers.get("Idempotency-Key") || payload.idempotencyKey;
+    const parsed = tipRequestSchema.safeParse({
       creatorUserId: payload.creatorUserId,
       amount:
         typeof payload.amount === "number"
           ? payload.amount
           : Number(payload.amount),
+      idempotencyKey,
     });
     if (!parsed.success) {
       return NextResponse.json(
@@ -53,12 +56,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await CreditService.tipCreator(
+    const result = await CreditService.tipCreator(
       session.user.id!,
       parsed.data.creatorUserId,
-      parsed.data.amount
+      parsed.data.amount,
+      parsed.data.idempotencyKey
     );
-    return NextResponse.json({ message: "Tip sent successfully" });
+    return NextResponse.json({
+      message: "Tip sent successfully",
+      referenceId: result.referenceId,
+      senderBalance: result.senderBalance,
+      creatorBalance: result.creatorBalance,
+    });
   } catch (error: unknown) {
     console.error("Error processing credits:", error);
     const message = error instanceof Error ? error.message : "";
@@ -68,9 +77,10 @@ export async function POST(request: NextRequest) {
       "User is not a creator",
       "You cannot tip yourself",
       "Tip amount must be a positive integer",
+      "Idempotency key was already used for a different tip",
     ]);
     if (knownErrors.has(message)) {
-      const status = message === "Creator not found" ? 404 : 400;
+      const status = message === "Creator not found" ? 404 : message.includes("Idempotency") ? 409 : 400;
       return NextResponse.json({ error: message }, { status });
     }
     return NextResponse.json(
