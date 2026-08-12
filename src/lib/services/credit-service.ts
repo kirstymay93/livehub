@@ -11,7 +11,7 @@ export class CreditService {
       balance = await prisma.creditBalance.create({
         data: {
           userId,
-          balance: 1250, // Starting balance
+          balance: 1250,
         },
       });
     }
@@ -20,104 +20,97 @@ export class CreditService {
   }
 
   static async addCredits(userId: string, amount: number, description: string) {
-    let balance = await prisma.creditBalance.findUnique({
-      where: { userId },
-    });
-
-    if (!balance) {
-      balance = await prisma.creditBalance.create({
-        data: {
-          userId,
-          balance: amount,
-        },
-      });
-    } else {
-      balance = await prisma.creditBalance.update({
-        where: { userId },
-        data: { balance: { increment: amount } },
-      });
+    if (!Number.isInteger(amount) || amount < 1) {
+      throw new Error('Credit amount must be a positive integer');
     }
 
-    await prisma.creditTransaction.create({
-      data: {
-        userId,
-        type: TransactionType.PURCHASE,
-        amount,
-        description,
-      },
-    });
+    return prisma.$transaction(async (tx) => {
+      const balance = await tx.creditBalance.upsert({
+        where: { userId },
+        create: { userId, balance: amount },
+        update: { balance: { increment: amount } },
+      });
 
-    return balance.balance;
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          type: TransactionType.PURCHASE,
+          amount,
+          description,
+        },
+      });
+
+      return balance.balance;
+    });
   }
 
   static async tipCreator(senderId: string, creatorId: string, amount: number) {
-    // Get sender balance
-    const senderBalance = await prisma.creditBalance.findUnique({
-      where: { userId: senderId },
-    });
-
-    if (!senderBalance || senderBalance.balance < amount) {
-      throw new Error('Insufficient credits');
+    if (senderId === creatorId) {
+      throw new Error('You cannot tip yourself');
+    }
+    if (!Number.isInteger(amount) || amount < 1) {
+      throw new Error('Tip amount must be a positive integer');
     }
 
-    // Verify creator exists
-    const creator = await prisma.user.findUnique({
-      where: { id: creatorId },
-    });
+    return prisma.$transaction(async (tx) => {
+      const creator = await tx.user.findUnique({
+        where: { id: creatorId },
+        select: { id: true, username: true, role: true },
+      });
 
-    if (!creator) {
-      throw new Error('Creator not found');
-    }
+      if (!creator) {
+        throw new Error('Creator not found');
+      }
+      if (creator.role !== 'CREATOR') {
+        throw new Error('User is not a creator');
+      }
 
-    // Deduct from sender
-    await prisma.creditBalance.update({
-      where: { userId: senderId },
-      data: { balance: { decrement: amount } },
-    });
-
-    // Add to creator
-    let creatorBalance = await prisma.creditBalance.findUnique({
-      where: { userId: creatorId },
-    });
-
-    if (!creatorBalance) {
-      creatorBalance = await prisma.creditBalance.create({
-        data: {
-          userId: creatorId,
-          balance: amount,
+      const senderUpdate = await tx.creditBalance.updateMany({
+        where: {
+          userId: senderId,
+          balance: { gte: amount },
         },
+        data: { balance: { decrement: amount } },
       });
-    } else {
-      creatorBalance = await prisma.creditBalance.update({
+
+      if (senderUpdate.count !== 1) {
+        throw new Error('Insufficient credits');
+      }
+
+      const creatorBalance = await tx.creditBalance.upsert({
         where: { userId: creatorId },
-        data: { balance: { increment: amount } },
+        create: { userId: creatorId, balance: amount },
+        update: { balance: { increment: amount } },
       });
-    }
 
-    // Create transactions
-    await prisma.creditTransaction.create({
-      data: {
-        userId: senderId,
-        type: TransactionType.TIP,
-        amount,
-        description: `Tip to ${creator.username}`,
-        relatedUserId: creatorId,
-      },
+      await tx.creditTransaction.createMany({
+        data: [
+          {
+            userId: senderId,
+            type: TransactionType.TIP,
+            amount,
+            description: `Tip to ${creator.username}`,
+            relatedUserId: creatorId,
+          },
+          {
+            userId: creatorId,
+            type: TransactionType.EARNINGS,
+            amount,
+            description: `Tip from ${creator.username}`,
+            relatedUserId: senderId,
+          },
+        ],
+      });
+
+      const senderBalance = await tx.creditBalance.findUniqueOrThrow({
+        where: { userId: senderId },
+        select: { balance: true },
+      });
+
+      return {
+        senderBalance: senderBalance.balance,
+        creatorBalance: creatorBalance.balance,
+      };
     });
-
-    await prisma.creditTransaction.create({
-      data: {
-        userId: creatorId,
-        type: TransactionType.EARNINGS,
-        amount,
-        description: `Tip from ${creator.username}`,
-        relatedUserId: senderId,
-      },
-    });
-
-    return {
-      senderBalance: senderBalance.balance - amount,
-      creatorBalance: creatorBalance.balance,
-    };
   }
 }

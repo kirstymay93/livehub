@@ -13,3 +13,5 @@ build
 coverage
 .vitest
 .prisma
+.vercel
+.env*

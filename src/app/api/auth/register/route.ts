@@ -1,38 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
-
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+import { registerSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, username } = await request.json();
-
-    // Validation
-    if (!email || !password || !username) {
+    const parsed = registerSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: parsed.error.issues[0]?.message || "Invalid registration data" },
         { status: 400 }
       );
     }
-
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      return NextResponse.json(
-        { error: `Password must be at least ${PASSWORD_MIN_LENGTH} characters` },
-        { status: 400 }
-      );
-    }
-
-    if (!PASSWORD_REGEX.test(password)) {
-      return NextResponse.json(
-        {
-          error:
-            "Password must contain at least one uppercase letter, lowercase letter, and number",
-        },
-        { status: 400 }
-      );
-    }
+    const { email, password, username } = parsed.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

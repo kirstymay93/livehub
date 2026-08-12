@@ -4,19 +4,21 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./lib/db";
 import { verifyPassword } from "./lib/auth/password";
 import { loginSchema } from "./lib/validation";
+import authConfig from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
     Credentials({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) {
-          throw new Error("Invalid credentials format");
+          return null;
         }
 
         const user = await prisma.user.findUnique({
@@ -24,16 +26,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         const isValid = await verifyPassword(parsed.data.password, user.password);
         if (!isValid) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         if (user.suspended) {
-          throw new Error("Account suspended");
+          return null;
         }
 
         return {
