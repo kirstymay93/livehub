@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { X } from "lucide-react";
-import { Button } from "./button";
 
 interface DialogProps {
   open?: boolean;

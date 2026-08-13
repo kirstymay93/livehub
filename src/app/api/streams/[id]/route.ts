@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { StreamService } from "@/lib/services/stream-service";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const stream = await StreamService.getStreamById(params.id);
+    const { id } = await params;
+    const stream = await StreamService.getStreamById(id);
 
     if (!stream) {
       return NextResponse.json({ error: "Stream not found" }, { status: 404 });
@@ -26,16 +26,17 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id } = await params;
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const stream = await StreamService.getStreamById(params.id);
+    const stream = await StreamService.getStreamById(id);
 
     if (!stream) {
       return NextResponse.json({ error: "Stream not found" }, { status: 404 });
@@ -48,9 +49,9 @@ export async function PATCH(
     const { action } = await request.json();
 
     if (action === "go-live") {
-      return NextResponse.json(await StreamService.goLive(params.id));
+      return NextResponse.json(await StreamService.goLive(id));
     } else if (action === "end-stream") {
-      return NextResponse.json(await StreamService.endStream(params.id));
+      return NextResponse.json(await StreamService.endStream(id));
     }
 
     return NextResponse.json(

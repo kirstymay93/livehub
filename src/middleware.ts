@@ -1,54 +1,51 @@
-import { withAuth } from 'next-auth/middleware';
-import { NextRequest } from 'next/server';
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
+import { NextRequest, NextResponse } from "next/server";
 
-export const middleware = withAuth(
-  function middleware(req: NextRequest & { nextauth: any }) {
-    const { token } = req.nextauth;
-    const pathname = req.nextUrl.pathname;
+const { auth } = NextAuth(authConfig);
 
-    // Protect creator dashboard
-    if (pathname.startsWith('/creator-dashboard')) {
-      if (!token || (token.role as string) !== 'CREATOR') {
-        return new Response('Unauthorized', { status: 403 });
-      }
-    }
+function loginRedirect(req: NextRequest) {
+  const url = new URL("/login", req.url);
+  url.searchParams.set("callbackUrl", req.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
 
-    // Protect admin dashboard
-    if (pathname.startsWith('/admin')) {
-      if (!token || (token.role as string) !== 'ADMIN') {
-        return new Response('Unauthorized', { status: 403 });
-      }
-    }
+export default auth((req) => {
+  const user = req.auth?.user;
+  const pathname = req.nextUrl.pathname;
 
-    // Protect dashboard
-    if (pathname.startsWith('/dashboard')) {
-      if (!token) {
-        return new Response('Unauthorized', { status: 403 });
-      }
-    }
-
-    return undefined;
-  },
-  {
-    callbacks: {
-      authorized: ({ req, token }) => {
-        const pathname = req.nextUrl.pathname;
-
-        // Public routes
-        const publicRoutes = ['/', '/login', '/register', '/discover', '/creator', '/stream', '/live'];
-        const isPublic = publicRoutes.some(route => pathname.startsWith(route));
-
-        if (isPublic) return true;
-
-        // Protected routes require token
-        return !!token;
-      },
-    },
+  if (pathname.startsWith("/creator-dashboard") && !user) {
+    return loginRedirect(req);
   }
-);
+
+  if (pathname.startsWith("/creator-dashboard") && user?.role !== "CREATOR") {
+    return NextResponse.redirect(new URL("/?message=Creator access required", req.url));
+  }
+
+  if (pathname.startsWith("/admin") && !user) {
+    return loginRedirect(req);
+  }
+
+  if (pathname.startsWith("/admin") && user?.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/?message=Administrator access required", req.url));
+  }
+
+  if (pathname.startsWith("/dashboard") && !user) {
+    return loginRedirect(req);
+  }
+
+  const publicRoutes = ["/", "/login", "/register", "/discover", "/creator", "/stream", "/live"];
+  const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
+
+  if (!isPublic && !user) {
+    return loginRedirect(req);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg).*)",
   ],
 };

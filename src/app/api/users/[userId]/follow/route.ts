@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { FollowService } from "@/lib/services/follow-service";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await params;
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +16,7 @@ export async function GET(
 
     const isFollowing = await FollowService.isFollowing(
       session.user.id!,
-      params.userId
+      userId
     );
 
     return NextResponse.json({ isFollowing });
@@ -31,10 +31,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await params;
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,10 +44,10 @@ export async function POST(
     const { action } = await request.json();
 
     if (action === "follow") {
-      await FollowService.follow(session.user.id!, params.userId);
+      await FollowService.follow(session.user.id!, userId);
       return NextResponse.json({ message: "Followed successfully" });
     } else if (action === "unfollow") {
-      await FollowService.unfollow(session.user.id!, params.userId);
+      await FollowService.unfollow(session.user.id!, userId);
       return NextResponse.json({ message: "Unfollowed successfully" });
     }
 

@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
-import { chatService } from "@/lib/services/chat-service";
+
 
 interface ChatMessage {
   id: string;
@@ -23,6 +22,21 @@ interface ChatPanelProps {
   streamId: string;
 }
 
+const toChatMessage = (message: {
+  id: string;
+  userId: string;
+  message: string;
+  createdAt: Date;
+  user: { username: string; avatar: string | null };
+}): ChatMessage => ({
+  id: message.id,
+  userId: message.userId,
+  username: message.user.username,
+  avatar: message.user.avatar || undefined,
+  message: message.message,
+  timestamp: new Date(message.createdAt),
+});
+
 const ChatPanel = ({ streamId }: ChatPanelProps) => {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -31,9 +45,28 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load initial messages
-    const initialMessages = chatService.getMessages(streamId);
-    setMessages(initialMessages);
+    let cancelled = false;
+
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(`/api/streams/${streamId}/chat`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) {
+            setMessages(data.map(toChatMessage));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    };
+
+    loadMessages();
+    const interval = setInterval(loadMessages, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [streamId]);
 
   useEffect(() => {
@@ -50,16 +83,19 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
 
     setIsLoading(true);
     try {
-      const message = chatService.addMessage(
-        streamId,
-        session.user.id!,
-        session.user.username || "Anonymous",
-        newMessage,
-        session.user.image || undefined
-      );
-
-      setMessages((prev) => [...prev, message]);
-      setNewMessage("");
+      const res = await fetch(`/api/streams/${streamId}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: newMessage }),
+      });
+      if (res.ok) {
+        const message = await res.json();
+        setMessages((prev) => [...prev, toChatMessage(message)]);
+        setNewMessage("");
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to send message");
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {

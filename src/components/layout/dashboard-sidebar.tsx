@@ -1,11 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { Home, Compass, Settings, LayoutDashboard, Users } from "lucide-react";
+import { Home, Compass, Settings, LayoutDashboard } from "lucide-react";
 
 const DashboardSidebar = () => {
-  const { data: session } = useSession();
-
   const menuItems = [
     { href: "/dashboard", label: "Overview", icon: Home },
     { href: "/dashboard/favourites", label: "Favourites", icon: Compass },

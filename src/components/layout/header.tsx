@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Menu, X, Search, Home, Compass, LogOut, Settings } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
@@ -56,6 +56,9 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
+                <Link href="/wallet" className="hidden sm:inline text-gray-300 hover:text-white transition-colors">
+                  Wallet
+                </Link>
                 <div className="relative group">
                   <Avatar
                     initials={session.user.username?.slice(0, 2).toUpperCase() || "U"}
@@ -130,6 +133,9 @@ const Header = () => {
               <>
                 <Link href="/dashboard" className="block px-4 py-2 text-gray-300 hover:text-white">
                   Dashboard
+                </Link>
+                <Link href="/wallet" className="block px-4 py-2 text-gray-300 hover:text-white">
+                  Wallet
                 </Link>
                 <button
                   onClick={() => signOut()}

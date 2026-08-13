@@ -2,13 +2,14 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "primary" | "success" | "warning" | "danger";
+  variant?: "primary" | "secondary" | "success" | "warning" | "danger";
 }
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = "primary", ...props }, ref) => {
     const variants = {
       primary: "bg-livehub-accent text-white",
+      secondary: "bg-livehub-hover text-gray-300",
       success: "bg-green-600 text-white",
       warning: "bg-yellow-600 text-white",
       danger: "bg-red-600 text-white",

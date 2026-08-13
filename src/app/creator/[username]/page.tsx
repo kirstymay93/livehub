@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { use, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 interface CreatorProfilePageProps {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }
 
 export default function CreatorProfilePage({ params }: CreatorProfilePageProps) {
+  const { username } = use(params);
   const { data: session } = useSession();
   const [creator, setCreator] = useState<any>(null);
   const [streams, setStreams] = useState<any[]>([]);
@@ -23,7 +23,7 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
   useEffect(() => {
     const fetchCreatorData = async () => {
       try {
-        const res = await fetch(`/api/creators/${params.username}`);
+        const res = await fetch(`/api/creators/${username}`);
         if (res.ok) {
           const data = await res.json();
           setCreator(data.creator);
@@ -38,7 +38,7 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
     };
 
     fetchCreatorData();
-  }, [params.username]);
+  }, [username]);
 
   if (isLoading) {
     return (
@@ -56,7 +56,7 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
       <div className="flex items-center justify-center min-h-screen">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-2xl font-bold text-white mb-2">Creator Not Found</h2>
-          <p className="text-gray-400 mb-6">This creator doesn't exist or has been removed.</p>
+          <p className="text-gray-400 mb-6">This creator doesn&apos;t exist or has been removed.</p>
           <Button variant="primary" onClick={() => window.history.back()}>
             Go Back
           </Button>

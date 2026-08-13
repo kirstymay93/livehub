@@ -29,6 +29,14 @@ export default function DiscoverPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("viewers");
   const [showFilters, setShowFilters] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const updateViewport = () => setIsDesktop(window.innerWidth >= 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -92,7 +100,7 @@ export default function DiscoverPage() {
           </button>
         </div>
 
-        {(showFilters || window.innerWidth >= 768) && (
+        {(showFilters || isDesktop) && (
           <>
             {/* Categories */}
             <div>
