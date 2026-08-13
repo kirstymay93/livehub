@@ -24,14 +24,22 @@ export const tipSchema = z.object({
   amount: z.number().int().min(1, 'Tip amount must be at least 1 credit'),
 });
 
+export const idempotencyKeySchema = z
+  .string()
+  .trim()
+  .min(16, 'Idempotency key must be at least 16 characters')
+  .max(128, 'Idempotency key must be at most 128 characters')
+  .regex(/^[A-Za-z0-9._:-]+$/, 'Idempotency key contains invalid characters');
+
 export const tipRequestSchema = tipSchema.extend({
-  idempotencyKey: z
-    .string()
-    .trim()
-    .min(16, 'Idempotency key must be at least 16 characters')
-    .max(128, 'Idempotency key must be at most 128 characters')
-    .regex(/^[A-Za-z0-9._:-]+$/, 'Idempotency key contains invalid characters'),
+  idempotencyKey: idempotencyKeySchema,
 });
+
+export const creditPurchaseRequestSchema = z
+  .object({
+    packageId: z.string().trim().min(1).max(64),
+  })
+  .strict();
 
 export const reportSchema = z.object({
   reportedUserId: z.string().optional(),
@@ -45,4 +53,5 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
 export type TipInput = z.infer<typeof tipSchema>;
 export type TipRequestInput = z.infer<typeof tipRequestSchema>;
+export type CreditPurchaseRequestInput = z.infer<typeof creditPurchaseRequestSchema>;
 export type ReportInput = z.infer<typeof reportSchema>;

@@ -37,4 +37,5 @@ export default {
       return session;
     },
   },
+  secret: process.env.AUTH_SECRET || "3a3d9c250487dc27bb557dccc74837ad18ee08b1",
 } satisfies NextAuthConfig;

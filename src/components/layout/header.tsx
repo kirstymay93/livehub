@@ -56,6 +56,9 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
+                <Link href="/wallet" className="hidden sm:inline text-gray-300 hover:text-white transition-colors">
+                  Wallet
+                </Link>
                 <div className="relative group">
                   <Avatar
                     initials={session.user.username?.slice(0, 2).toUpperCase() || "U"}
@@ -130,6 +133,9 @@ const Header = () => {
               <>
                 <Link href="/dashboard" className="block px-4 py-2 text-gray-300 hover:text-white">
                   Dashboard
+                </Link>
+                <Link href="/wallet" className="block px-4 py-2 text-gray-300 hover:text-white">
+                  Wallet
                 </Link>
                 <button
                   onClick={() => signOut()}

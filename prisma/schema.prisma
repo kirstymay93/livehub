@@ -35,6 +35,14 @@ enum TransactionType {
   EARNINGS
 }
 
+enum CreditPurchaseStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
 enum ReportReason {
   SPAM
   HARASSMENT
@@ -63,6 +71,7 @@ model User {
   favourites          Favourite[]
   createdFavourites   Favourite[]         @relation("CreatorFavourites")
   creditBalance       CreditBalance?
+  creditPurchases     CreditPurchase[]
   transactions        CreditTransaction[]
   relatedTransactions CreditTransaction[] @relation("CreditTransactionRelatedUser")
   sentTransfers       CreditTransfer[]    @relation("CreditTransferSender")
@@ -200,18 +209,43 @@ model CreditTransaction {
   description   String          @default("")
   relatedUserId String? // For tips, this is the creator
   transferId    String?
+  purchaseId    String?         @unique
   createdAt     DateTime        @default(now())
 
   // Relations
   user        User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   relatedUser User?           @relation("CreditTransactionRelatedUser", fields: [relatedUserId], references: [id], onDelete: Restrict)
   transfer    CreditTransfer? @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  purchase    CreditPurchase? @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
 
   @@unique([transferId, type])
   @@index([userId])
   @@index([type])
   @@index([createdAt])
   @@index([transferId])
+}
+
+model CreditPurchase {
+  id                 String               @id @default(cuid())
+  userId             String
+  provider           String
+  providerPaymentId  String?              @unique
+  providerCheckoutId String?              @unique
+  requestId          String               @unique
+  packageId          String
+  credits            Int
+  currency           String
+  amount             Int
+  status             CreditPurchaseStatus @default(PENDING)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  completedAt        DateTime?
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  ledgerEntry CreditTransaction?
+
+  @@index([userId, createdAt])
+  @@index([status])
 }
 
 model Report {
