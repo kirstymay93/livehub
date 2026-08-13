@@ -57,5 +57,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || "3a3d9c250487dc27bb557dccc74837ad18ee08b1", // Fallback to a stable hash for QA
 });
