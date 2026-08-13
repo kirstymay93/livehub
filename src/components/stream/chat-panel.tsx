@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
-import { ChatService } from "@/lib/services/chat-service";
+
 
 interface ChatMessage {
   id: string;
@@ -49,9 +49,12 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
 
     const loadMessages = async () => {
       try {
-        const initialMessages = await ChatService.getMessages(streamId);
-        if (!cancelled) {
-          setMessages(initialMessages.map(toChatMessage));
+        const res = await fetch(`/api/streams/${streamId}/chat`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) {
+            setMessages(data.map(toChatMessage));
+          }
         }
       } catch (error) {
         console.error("Failed to load messages:", error);
@@ -59,8 +62,10 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
     };
 
     loadMessages();
+    const interval = setInterval(loadMessages, 3000);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [streamId]);
 
@@ -78,14 +83,19 @@ const ChatPanel = ({ streamId }: ChatPanelProps) => {
 
     setIsLoading(true);
     try {
-      const message = await ChatService.addMessage(
-        streamId,
-        session.user.id!,
-        newMessage
-      );
-
-      setMessages((prev) => [...prev, toChatMessage(message)]);
-      setNewMessage("");
+      const res = await fetch(`/api/streams/${streamId}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: newMessage }),
+      });
+      if (res.ok) {
+        const message = await res.json();
+        setMessages((prev) => [...prev, toChatMessage(message)]);
+        setNewMessage("");
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to send message");
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
