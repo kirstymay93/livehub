@@ -42,33 +42,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.username,
+          role: user.role,
         };
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.username = dbUser.username;
-        }
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.username = token.username as string;
-      }
-      return session;
-    },
-  },
+  // Note: jwt and session callbacks are now in auth.config.ts 
+  // to ensure they are available to the middleware.
+  callbacks: authConfig.callbacks,
   pages: {
     signIn: "/login",
   },
