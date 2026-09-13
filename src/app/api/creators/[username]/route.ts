@@ -41,10 +41,7 @@ export async function GET(
     }
 
     const streams = await prisma.stream.findMany({
-      where: {
-        creatorId: creator.id,
-        status: { in: [StreamStatus.LIVE, StreamStatus.ENDED] },
-      },
+      where: { creatorId: creator.id },
       orderBy: { createdAt: "desc" },
       take: 6,
       select: {

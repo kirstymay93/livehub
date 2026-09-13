@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,7 @@ export default function CreatorSignupPage() {
           displayName,
           bio,
           categories: selectedCategories,
+          activateCreator: true,
         }),
       });
 
@@ -102,8 +103,9 @@ export default function CreatorSignupPage() {
         throw new Error(data.error || "Unable to enable creator profile");
       }
 
-      router.push("/creator-dashboard");
-      router.refresh();
+      await signOut({ redirect: false });
+      window.location.assign("/login?callbackUrl=/creator-dashboard&upgraded=1");
+      return;
     } catch (error: any) {
       setMessage(error.message || "Unable to enable creator profile");
     } finally {

@@ -60,6 +60,7 @@ export async function PUT(request: NextRequest) {
     const categories = normalizeCreatorCategories(
       Array.isArray(body.categories) ? body.categories : []
     );
+    const activateCreator = body.activateCreator === true;
     const parsed = creatorProfileSchema.safeParse({
       displayName: body.displayName?.trim() || undefined,
       bio: body.bio?.trim() || undefined,
@@ -92,7 +93,9 @@ export async function PUT(request: NextRequest) {
           role:
             currentUser.role === UserRole.ADMIN
               ? UserRole.ADMIN
-              : UserRole.CREATOR,
+              : activateCreator
+                ? UserRole.CREATOR
+                : currentUser.role,
         },
         select: {
           id: true,
@@ -124,21 +127,11 @@ export async function PUT(request: NextRequest) {
       return { user, profile };
     });
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       role: result.user.role,
       username: result.user.username,
       profile: result.profile,
     });
-
-    response.cookies.set("livehub_creator_access", "1", {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 5,
-    });
-
-    return response;
   } catch (error) {
     console.error("Error saving creator profile:", error);
     return NextResponse.json(

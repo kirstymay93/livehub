@@ -13,7 +13,6 @@ function loginRedirect(req: NextRequest) {
 export default auth((req) => {
   const user = req.auth?.user;
   const pathname = req.nextUrl.pathname;
-  const creatorAccessCookie = req.cookies.get("livehub_creator_access")?.value === "1";
 
   if (pathname.startsWith("/creator-dashboard") && !user) {
     return loginRedirect(req);
@@ -22,8 +21,7 @@ export default auth((req) => {
   if (
     pathname.startsWith("/creator-dashboard") &&
     user?.role !== "CREATOR" &&
-    user?.role !== "ADMIN" &&
-    !creatorAccessCookie
+    user?.role !== "ADMIN"
   ) {
     return NextResponse.redirect(new URL("/creator-signup", req.url));
   }
