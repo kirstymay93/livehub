@@ -32,11 +32,13 @@ export default function CreatorSignupPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
+      setIsLoadingProfile(false);
       router.replace("/login?callbackUrl=/creator-signup");
       return;
     }
 
     if (session?.user?.role === "CREATOR" || session?.user?.role === "ADMIN") {
+      setIsLoadingProfile(false);
       router.replace("/creator-dashboard");
       return;
     }

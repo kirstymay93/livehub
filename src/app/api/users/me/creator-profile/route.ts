@@ -57,10 +57,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    const categories = normalizeCreatorCategories(
+      Array.isArray(body.categories) ? body.categories : []
+    );
     const parsed = creatorProfileSchema.safeParse({
       displayName: body.displayName?.trim() || undefined,
       bio: body.bio?.trim() || undefined,
-      categories: Array.isArray(body.categories) ? body.categories : [],
+      categories,
     });
     if (!parsed.success) {
       return NextResponse.json(
@@ -68,8 +71,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const categories = normalizeCreatorCategories(parsed.data.categories);
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
