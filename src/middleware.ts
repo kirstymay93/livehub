@@ -18,12 +18,10 @@ export default auth((req) => {
     return loginRedirect(req);
   }
 
-  if (
-    pathname.startsWith("/creator-dashboard") &&
-    user?.role !== "CREATOR" &&
-    user?.role !== "ADMIN"
-  ) {
-    return NextResponse.redirect(new URL("/creator-signup", req.url));
+  if (pathname.startsWith("/creator-dashboard")) {
+    if (user?.role !== "CREATOR" && user?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/creator-signup", req.url));
+    }
   }
 
   if (pathname.startsWith("/admin") && !user) {

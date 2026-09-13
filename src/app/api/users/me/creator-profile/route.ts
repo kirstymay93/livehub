@@ -87,22 +87,25 @@ export async function PUT(request: NextRequest) {
         throw new Error("User not found");
       }
 
-      const user = await tx.user.update({
-        where: { id: currentUser.id },
-        data: {
-          role:
-            currentUser.role === UserRole.ADMIN
-              ? UserRole.ADMIN
-              : activateCreator
-                ? UserRole.CREATOR
-                : currentUser.role,
-        },
-        select: {
-          id: true,
-          username: true,
-          role: true,
-        },
-      });
+      const nextRole =
+        currentUser.role === UserRole.ADMIN
+          ? UserRole.ADMIN
+          : activateCreator
+            ? UserRole.CREATOR
+            : currentUser.role;
+
+      const user =
+        nextRole === currentUser.role
+          ? currentUser
+          : await tx.user.update({
+              where: { id: currentUser.id },
+              data: { role: nextRole },
+              select: {
+                id: true,
+                username: true,
+                role: true,
+              },
+            });
 
       const profile = await tx.creatorProfile.upsert({
         where: { userId: user.id },

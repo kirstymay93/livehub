@@ -209,7 +209,7 @@ export default function CreatorSignupPage() {
             <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={!canSubmit}>
               Save and continue
             </Button>
-            <Button type="button" variant="secondary" onClick={() => router.back()}>
+            <Button type="button" variant="secondary" onClick={() => router.push("/")}>
               Cancel
             </Button>
           </div>
