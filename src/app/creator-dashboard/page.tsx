@@ -13,20 +13,29 @@ export default async function CreatorDashboardPage() {
     redirect("/login");
   }
 
-  if (session.user.role !== "CREATOR" && session.user.role !== "ADMIN") {
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, username: true, role: true },
+  });
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (user.role !== "CREATOR" && user.role !== "ADMIN") {
     redirect("/settings");
   }
 
   let stream = await prisma.stream.findFirst({
-    where: { creatorId: session.user.id, status: { not: "ENDED" } },
+    where: { creatorId: user.id, status: { not: "ENDED" } },
     orderBy: { createdAt: "desc" },
   });
 
   if (!stream) {
     stream = await prisma.stream.create({
       data: {
-        creatorId: session.user.id,
-        title: `${session.user.username || "Creator"}'s Live Stream`,
+        creatorId: user.id,
+        title: `${user.username || "Creator"}'s Live Stream`,
         category: "Just Chatting",
         description: "Welcome to my live stream!",
         status: "OFFLINE",

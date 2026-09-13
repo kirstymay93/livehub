@@ -17,7 +17,7 @@ const CREATOR_CATEGORIES = [
 
 export default function CreatorSignupPage() {
   const router = useRouter();
-  const { data: session, status, update } = useSession();
+  const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -52,6 +52,10 @@ export default function CreatorSignupPage() {
         const response = await fetch("/api/users/me/creator-profile");
         if (response.ok) {
           const data = await response.json();
+          if (data.role === "CREATOR" || data.role === "ADMIN") {
+            router.replace("/creator-dashboard");
+            return;
+          }
           setDisplayName(data.profile?.displayName || "");
           setBio(data.profile?.bio || "");
           setSelectedCategories(data.profile?.categories || []);
@@ -97,14 +101,6 @@ export default function CreatorSignupPage() {
       if (!response.ok) {
         throw new Error(data.error || "Unable to enable creator profile");
       }
-
-      await update({
-        user: {
-          ...session?.user,
-          role: data.role,
-          username: data.username || session?.user?.username,
-        },
-      });
 
       setMessage({ type: "success", text: "Creator profile saved. Redirecting to your studio..." });
       router.push("/creator-dashboard");
@@ -154,10 +150,14 @@ export default function CreatorSignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="creator-display-name"
+              className="mb-2 block text-sm font-medium text-gray-300"
+            >
               Display name
             </label>
             <input
+              id="creator-display-name"
               type="text"
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
@@ -168,10 +168,14 @@ export default function CreatorSignupPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="creator-bio"
+              className="mb-2 block text-sm font-medium text-gray-300"
+            >
               Bio
             </label>
             <textarea
+              id="creator-bio"
               value={bio}
               onChange={(event) => setBio(event.target.value)}
               maxLength={500}

@@ -20,18 +20,12 @@ export default {
       }
       return true;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.username = user.name || undefined;
       }
-
-      if (trigger === "update" && session?.user) {
-        token.role = session.user.role;
-        token.username = session.user.username;
-      }
-
       return token;
     },
     async session({ session, token }) {
