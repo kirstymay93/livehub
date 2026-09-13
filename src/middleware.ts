@@ -14,11 +14,11 @@ export default auth((req) => {
   const user = req.auth?.user;
   const pathname = req.nextUrl.pathname;
 
-  if (pathname.startsWith("/creator-dashboard") && !user) {
-    return loginRedirect(req);
-  }
-
   if (pathname.startsWith("/creator-dashboard")) {
+    if (!user) {
+      return loginRedirect(req);
+    }
+
     if (user?.role !== "CREATOR" && user?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/creator-signup", req.url));
     }

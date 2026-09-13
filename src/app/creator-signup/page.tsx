@@ -112,8 +112,12 @@ export default function CreatorSignupPage() {
       await signOut({ redirect: false });
       window.location.assign("/login?callbackUrl=/creator-dashboard&upgraded=1");
       return;
-    } catch (error: any) {
-      setMessage(error.message || "Unable to enable creator profile");
+    } catch (error: unknown) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to enable creator profile"
+      );
     } finally {
       setIsSubmitting(false);
     }

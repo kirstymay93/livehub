@@ -68,8 +68,14 @@ export async function PUT(request: NextRequest) {
     );
     const activateCreator = body.activateCreator === true;
     const parsed = creatorProfileSchema.safeParse({
-      displayName: body.displayName?.trim() || undefined,
-      bio: body.bio?.trim() || undefined,
+      displayName:
+        typeof body.displayName === "string"
+          ? body.displayName.trim() || undefined
+          : body.displayName,
+      bio:
+        typeof body.bio === "string"
+          ? body.bio.trim() || undefined
+          : body.bio,
       categories,
     });
     if (!parsed.success) {
