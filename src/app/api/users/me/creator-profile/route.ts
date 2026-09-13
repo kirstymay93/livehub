@@ -5,7 +5,7 @@ import { normalizeCreatorCategories } from "@/lib/creator-profile";
 import { prisma } from "@/lib/db";
 import { creatorProfileSchema } from "@/lib/validation";
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
 
@@ -57,6 +57,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    if (!body || Array.isArray(body) || typeof body !== "object") {
+      return NextResponse.json(
+        { error: "Invalid creator profile" },
+        { status: 400 }
+      );
+    }
     const categories = normalizeCreatorCategories(
       Array.isArray(body.categories) ? body.categories : []
     );

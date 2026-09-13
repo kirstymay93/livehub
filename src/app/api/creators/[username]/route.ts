@@ -60,10 +60,7 @@ export async function GET(
         ? await FollowService.isFollowing(session.user.id, creator.id)
         : false;
 
-    const liveStream = await prisma.stream.findFirst({
-      where: { creatorId: creator.id, status: StreamStatus.LIVE },
-      select: { id: true },
-    });
+    const isLive = streams.some((stream) => stream.status === StreamStatus.LIVE);
 
     return NextResponse.json({
       creator: {
@@ -76,7 +73,7 @@ export async function GET(
         categories: creator.creatorProfile?.categories || [],
         followerCount: creator._count.followedBy,
         totalViews: creator.creatorProfile?.totalViews || 0,
-        isLive: !!liveStream,
+        isLive,
         verified: creator.role === UserRole.ADMIN,
       },
       streams,

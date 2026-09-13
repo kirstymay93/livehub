@@ -19,7 +19,12 @@ vi.mock("@/lib/db", () => ({
 }));
 
 const mockedAuth = vi.mocked(auth);
-const mockedPrisma = vi.mocked(prisma);
+const mockedUserFindUnique = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>;
+const mockedTransaction = prisma.$transaction as unknown as ReturnType<typeof vi.fn>;
+
+function getRequest() {
+  return new NextRequest("http://localhost/api/users/me/creator-profile");
+}
 
 function putRequest(body: Record<string, unknown>) {
   return new NextRequest("http://localhost/api/users/me/creator-profile", {
@@ -38,9 +43,17 @@ describe("creator profile route", () => {
   it("rejects unauthenticated profile reads", async () => {
     mockedAuth.mockResolvedValue(null as never);
 
-    const response = await GET();
+    const response = await GET(getRequest());
 
     expect(response.status).toBe(401);
+  });
+
+  it("returns 404 when the authenticated user no longer exists", async () => {
+    mockedUserFindUnique.mockResolvedValue(null);
+
+    const response = await GET(getRequest());
+
+    expect(response.status).toBe(404);
   });
 
   it("trims fields, normalizes categories, and promotes creators when onboarding completes", async () => {
@@ -66,7 +79,7 @@ describe("creator profile route", () => {
       },
     };
 
-    mockedPrisma.$transaction.mockImplementation(async (callback) => callback(tx as never));
+    mockedTransaction.mockImplementation(async (callback) => callback(tx as never));
 
     const response = await PUT(
       putRequest({
@@ -127,7 +140,7 @@ describe("creator profile route", () => {
       },
     };
 
-    mockedPrisma.$transaction.mockImplementation(async (callback) => callback(tx as never));
+    mockedTransaction.mockImplementation(async (callback) => callback(tx as never));
 
     const response = await PUT(
       putRequest({

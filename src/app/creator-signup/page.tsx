@@ -177,16 +177,16 @@ export default function CreatorSignupPage() {
             />
           </div>
 
-          <div>
+          <fieldset>
             <div className="mb-3 flex items-center justify-between gap-4">
-              <label className="block text-sm font-medium text-gray-300">
+              <legend className="block text-sm font-medium text-gray-300">
                 Categories
-              </label>
+              </legend>
               <span className="text-xs text-gray-500">
                 Pick up to 5 ({selectedCategories.length}/5)
               </span>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3" role="group" aria-label="Creator categories">
               {CREATOR_CATEGORIES.map((category) => {
                 const isSelected = selectedCategories.includes(category);
 
@@ -196,6 +196,7 @@ export default function CreatorSignupPage() {
                     type="button"
                     size="sm"
                     variant={isSelected ? "primary" : "secondary"}
+                    aria-pressed={isSelected}
                     onClick={() => toggleCategory(category)}
                   >
                     {category}
@@ -203,7 +204,7 @@ export default function CreatorSignupPage() {
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
           <div className="flex gap-3">
             <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={!canSubmit}>
