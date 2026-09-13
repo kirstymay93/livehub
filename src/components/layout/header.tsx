@@ -49,7 +49,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             {session?.user ? (
               <>
-                {session.user.role === "CREATOR" && (
+                {(session.user.role === "CREATOR" || session.user.role === "ADMIN") && (
                   <Link href="/creator-dashboard">
                     <Button size="sm" variant="secondary">
                       Go Live

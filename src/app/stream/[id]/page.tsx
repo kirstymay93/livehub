@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ViewerStreamPlayer } from "@/components/stream/viewer-stream-player";
@@ -34,7 +35,10 @@ export default async function StreamPage(
           <ViewerStreamPlayer streamId={stream.id} status={stream.status} />
           <Card className="p-6">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <Link
+                href={`/creator/${stream.creator.username}`}
+                className="flex items-center gap-4"
+              >
                 <Avatar
                   src={stream.creator.avatar || undefined}
                   initials={stream.creator.username.slice(0, 2).toUpperCase()}
@@ -51,7 +55,7 @@ export default async function StreamPage(
                     </span>
                   </p>
                 </div>
-              </div>
+              </Link>
               <div className="flex items-center gap-2 bg-livehub-hover px-3 py-1.5 rounded-lg border border-livehub-border text-sm text-gray-300">
                 <Eye size={16} className="text-livehub-accent" />
                 <span>{stream.viewerCount} watching</span>

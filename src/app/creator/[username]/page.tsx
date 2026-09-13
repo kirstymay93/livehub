@@ -1,6 +1,7 @@
 "use client";
 
 import React, { use, useState, useEffect } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,9 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
                 <h1 className="text-3xl font-bold text-white">{creator.username}</h1>
                 {creator.verified && <Badge variant="primary">Verified</Badge>}
               </div>
+              {creator.handle && (
+                <p className="mb-2 text-sm text-gray-400">@{creator.handle}</p>
+              )}
               {creator.bio && <p className="text-gray-300 mb-4">{creator.bio}</p>}
               <div className="flex flex-wrap gap-4">
                 <div>
@@ -158,20 +162,22 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
         {streams.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {streams.map((stream) => (
-              <Card key={stream.id} className="overflow-hidden hover:border-livehub-accent transition-colors cursor-pointer">
-                <div className="aspect-video bg-livehub-hover flex items-center justify-center">
-                  {stream.status === "LIVE" && (
-                    <Badge variant="danger" className="absolute top-2 left-2 z-10">
-                      LIVE
-                    </Badge>
-                  )}
-                  <p className="text-gray-400">{stream.title}</p>
-                </div>
-                <div className="p-4">
-                  <p className="font-medium text-white line-clamp-2">{stream.title}</p>
-                  <p className="text-sm text-gray-400 mt-2">{stream.category}</p>
-                </div>
-              </Card>
+              <Link key={stream.id} href={`/stream/${stream.id}`}>
+                <Card className="overflow-hidden hover:border-livehub-accent transition-colors cursor-pointer">
+                  <div className="aspect-video bg-livehub-hover flex items-center justify-center">
+                    {stream.status === "LIVE" && (
+                      <Badge variant="danger" className="absolute top-2 left-2 z-10">
+                        LIVE
+                      </Badge>
+                    )}
+                    <p className="text-gray-400">{stream.title}</p>
+                  </div>
+                  <div className="p-4">
+                    <p className="font-medium text-white line-clamp-2">{stream.title}</p>
+                    <p className="text-sm text-gray-400 mt-2">{stream.category}</p>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         ) : (

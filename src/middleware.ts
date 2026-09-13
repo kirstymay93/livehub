@@ -18,7 +18,7 @@ export default auth((req) => {
     return loginRedirect(req);
   }
 
-  if (pathname.startsWith("/creator-dashboard") && user?.role !== "CREATOR") {
+  if (pathname.startsWith("/creator-dashboard") && user?.role !== "CREATOR" && user?.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/?message=Creator access required", req.url));
   }
 

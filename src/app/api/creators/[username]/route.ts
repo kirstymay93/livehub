@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import { StreamStatus, UserRole } from "@prisma/client";
+import { auth } from "@/auth";
+import { FollowService } from "@/lib/services/follow-service";
+import { prisma } from "@/lib/db";
+
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ username: string }> }
+) {
+  try {
+    const { username } = await context.params;
+    const session = await auth();
+
+    const creator = await prisma.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        role: true,
+        creatorProfile: {
+          select: {
+            displayName: true,
+            bio: true,
+            banner: true,
+            categories: true,
+            totalViews: true,
+          },
+        },
+        _count: {
+          select: {
+            followedBy: true,
+          },
+        },
+      },
+    });
+
+    if (!creator || (creator.role !== UserRole.CREATOR && creator.role !== UserRole.ADMIN)) {
+      return NextResponse.json({ error: "Creator not found" }, { status: 404 });
+    }
+
+    const streams = await prisma.stream.findMany({
+      where: { creatorId: creator.id },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        status: true,
+      },
+    });
+
+    const isFollowing =
+      session?.user?.id && session.user.id !== creator.id
+        ? await FollowService.isFollowing(session.user.id, creator.id)
+        : false;
+
+    const isLive = streams.some((stream) => stream.status === StreamStatus.LIVE);
+
+    return NextResponse.json({
+      creator: {
+        id: creator.id,
+        username: creator.creatorProfile?.displayName || creator.username,
+        handle: creator.username,
+        avatar: creator.avatar,
+        banner: creator.creatorProfile?.banner || null,
+        bio: creator.creatorProfile?.bio || "",
+        categories: creator.creatorProfile?.categories || [],
+        followerCount: creator._count.followedBy,
+        totalViews: creator.creatorProfile?.totalViews || 0,
+        isLive,
+        verified: creator.role === UserRole.ADMIN,
+      },
+      streams,
+      isFollowing,
+    });
+  } catch (error) {
+    console.error("Error fetching creator:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch creator" },
+      { status: 500 }
+    );
+  }
+}
