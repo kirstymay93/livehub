@@ -5,6 +5,13 @@ import { normalizeCreatorCategories } from "@/lib/creator-profile";
 import { prisma } from "@/lib/db";
 import { creatorProfileSchema } from "@/lib/validation";
 
+interface CreatorProfilePayload {
+  displayName?: unknown;
+  bio?: unknown;
+  categories?: unknown;
+  activateCreator?: unknown;
+}
+
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
@@ -56,26 +63,37 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid creator profile" },
+        { status: 400 }
+      );
+    }
+
     if (!body || Array.isArray(body) || typeof body !== "object") {
       return NextResponse.json(
         { error: "Invalid creator profile" },
         { status: 400 }
       );
     }
+
+    const payload = body as CreatorProfilePayload;
     const categories = normalizeCreatorCategories(
-      Array.isArray(body.categories) ? body.categories : []
+      Array.isArray(payload.categories) ? payload.categories : []
     );
-    const activateCreator = body.activateCreator === true;
+    const activateCreator = payload.activateCreator === true;
     const parsed = creatorProfileSchema.safeParse({
       displayName:
-        typeof body.displayName === "string"
-          ? body.displayName.trim() || undefined
-          : body.displayName,
+        typeof payload.displayName === "string"
+          ? payload.displayName.trim() || undefined
+          : payload.displayName,
       bio:
-        typeof body.bio === "string"
-          ? body.bio.trim() || undefined
-          : body.bio,
+        typeof payload.bio === "string"
+          ? payload.bio.trim() || undefined
+          : payload.bio,
       categories,
     });
     if (!parsed.success) {

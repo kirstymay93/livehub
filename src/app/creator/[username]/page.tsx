@@ -164,7 +164,7 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
             {streams.map((stream) => (
               <Link key={stream.id} href={`/stream/${stream.id}`}>
                 <Card className="overflow-hidden hover:border-livehub-accent transition-colors cursor-pointer">
-                  <div className="aspect-video bg-livehub-hover flex items-center justify-center">
+                  <div className="relative aspect-video bg-livehub-hover flex items-center justify-center">
                     {stream.status === "LIVE" && (
                       <Badge variant="danger" className="absolute top-2 left-2 z-10">
                         LIVE

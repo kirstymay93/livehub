@@ -103,10 +103,18 @@ export default function CreatorSignupPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = response.headers
+        .get("content-type")
+        ?.includes("application/json")
+        ? await response.json()
+        : null;
 
       if (!response.ok) {
-        throw new Error(data.error || "Unable to enable creator profile");
+        throw new Error(
+          data && typeof data === "object" && "error" in data
+            ? String(data.error)
+            : "Unable to enable creator profile"
+        );
       }
 
       await signOut({ redirect: false });
