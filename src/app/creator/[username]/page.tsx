@@ -106,12 +106,12 @@ export default function CreatorProfilePage({ params }: CreatorProfilePageProps) 
             />
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold text-white">{creator.username}</h1>
+                <h1 className="text-3xl font-bold text-white">
+                  {creator.displayName || creator.username}
+                </h1>
                 {creator.verified && <Badge variant="primary">Verified</Badge>}
               </div>
-              {creator.handle && (
-                <p className="mb-2 text-sm text-gray-400">@{creator.handle}</p>
-              )}
+              {creator.username && <p className="mb-2 text-sm text-gray-400">@{creator.username}</p>}
               {creator.bio && <p className="text-gray-300 mb-4">{creator.bio}</p>}
               <div className="flex flex-wrap gap-4">
                 <div>

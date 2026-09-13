@@ -62,8 +62,8 @@ export async function GET(
     return NextResponse.json({
       creator: {
         id: creator.id,
-        username: creator.creatorProfile?.displayName || creator.username,
-        handle: creator.username,
+        username: creator.username,
+        displayName: creator.creatorProfile?.displayName || creator.username,
         avatar: creator.avatar,
         banner: creator.creatorProfile?.banner || null,
         bio: creator.creatorProfile?.bio || "",

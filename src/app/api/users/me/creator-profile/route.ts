@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UserRole } from "@prisma/client";
 import { auth } from "@/auth";
+import { normalizeCreatorCategories } from "@/lib/creator-profile";
 import { prisma } from "@/lib/db";
 import { creatorProfileSchema } from "@/lib/validation";
-
-const sanitizeCategories = (categories?: string[]) =>
-  Array.from(
-    new Set(
-      (categories || [])
-        .map((category) => category.trim())
-        .filter(Boolean)
-    )
-  ).slice(0, 5);
 
 export async function GET() {
   try {
@@ -77,7 +69,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const categories = sanitizeCategories(parsed.data.categories);
+    const categories = normalizeCreatorCategories(parsed.data.categories);
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.update({

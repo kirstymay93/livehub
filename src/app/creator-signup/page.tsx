@@ -48,14 +48,12 @@ export default function CreatorSignupPage() {
     const loadProfile = async () => {
       try {
         const response = await fetch("/api/users/me/creator-profile");
-        if (!response.ok) {
-          return;
+        if (response.ok) {
+          const data = await response.json();
+          setDisplayName(data.profile?.displayName || "");
+          setBio(data.profile?.bio || "");
+          setSelectedCategories(data.profile?.categories || []);
         }
-
-        const data = await response.json();
-        setDisplayName(data.profile?.displayName || "");
-        setBio(data.profile?.bio || "");
-        setSelectedCategories(data.profile?.categories || []);
       } catch (error) {
         console.error("Failed to load creator profile:", error);
       } finally {
