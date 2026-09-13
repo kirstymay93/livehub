@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
       });
 
       if (!currentUser) {
-        throw new Error("User not found");
+        return null;
       }
 
       const nextRole =
@@ -135,6 +135,10 @@ export async function PUT(request: NextRequest) {
 
       return { user, profile };
     });
+
+    if (!result) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     return NextResponse.json({
       role: result.user.role,

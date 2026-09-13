@@ -59,9 +59,15 @@ export default function CreatorSignupPage() {
           setDisplayName(data.profile?.displayName || "");
           setBio(data.profile?.bio || "");
           setSelectedCategories(data.profile?.categories || []);
+        } else if (response.status === 401) {
+          router.replace("/login?callbackUrl=/creator-signup");
+          return;
+        } else {
+          setMessage("Unable to load creator setup right now.");
         }
       } catch (error) {
         console.error("Failed to load creator profile:", error);
+        setMessage("Unable to load creator setup right now.");
       } finally {
         setIsLoadingProfile(false);
       }
