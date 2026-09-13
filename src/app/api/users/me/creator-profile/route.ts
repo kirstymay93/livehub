@@ -73,11 +73,24 @@ export async function PUT(request: NextRequest) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.update({
+      const currentUser = await tx.user.findUnique({
         where: { id: session.user.id },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      });
+
+      if (!currentUser) {
+        throw new Error("User not found");
+      }
+
+      const user = await tx.user.update({
+        where: { id: currentUser.id },
         data: {
           role:
-            session.user.role === UserRole.ADMIN
+            currentUser.role === UserRole.ADMIN
               ? UserRole.ADMIN
               : UserRole.CREATOR,
         },
@@ -111,11 +124,21 @@ export async function PUT(request: NextRequest) {
       return { user, profile };
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       role: result.user.role,
       username: result.user.username,
       profile: result.profile,
     });
+
+    response.cookies.set("livehub_creator_access", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 5,
+    });
+
+    return response;
   } catch (error) {
     console.error("Error saving creator profile:", error);
     return NextResponse.json(

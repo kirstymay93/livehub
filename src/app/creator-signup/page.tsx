@@ -21,7 +21,7 @@ export default function CreatorSignupPage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
@@ -102,14 +102,10 @@ export default function CreatorSignupPage() {
         throw new Error(data.error || "Unable to enable creator profile");
       }
 
-      setMessage({ type: "success", text: "Creator profile saved. Redirecting to your studio..." });
       router.push("/creator-dashboard");
       router.refresh();
     } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: error.message || "Unable to enable creator profile",
-      });
+      setMessage(error.message || "Unable to enable creator profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,14 +133,8 @@ export default function CreatorSignupPage() {
         </div>
 
         {message && (
-          <div
-            className={`mb-6 rounded-lg border p-4 ${
-              message.type === "success"
-                ? "border-green-500/50 bg-green-500/20 text-green-200"
-                : "border-red-500/50 bg-red-500/20 text-red-200"
-            }`}
-          >
-            {message.text}
+          <div className="mb-6 rounded-lg border border-red-500/50 bg-red-500/20 p-4 text-red-200">
+            {message}
           </div>
         )}
 
