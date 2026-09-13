@@ -44,7 +44,7 @@ export async function GET(
       prisma.stream.findMany({
         where: {
           creatorId: creator.id,
-          status: { in: [StreamStatus.OFFLINE, StreamStatus.LIVE, StreamStatus.ENDED] },
+          status: { in: [StreamStatus.OFFLINE, StreamStatus.LIVE] },
         },
         orderBy: { createdAt: "desc" },
         take: 6,

@@ -81,6 +81,16 @@ export async function PUT(request: NextRequest) {
     }
 
     const payload = body as CreatorProfilePayload;
+    if (
+      Array.isArray(payload.categories) &&
+      payload.categories.some((category) => typeof category !== "string")
+    ) {
+      return NextResponse.json(
+        { error: "Invalid creator profile" },
+        { status: 400 }
+      );
+    }
+
     const categories = normalizeCreatorCategories(
       Array.isArray(payload.categories) ? payload.categories : []
     );

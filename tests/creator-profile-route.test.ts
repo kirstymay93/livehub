@@ -172,4 +172,14 @@ describe("creator profile route", () => {
       },
     });
   });
+
+  it("rejects mixed-type category arrays", async () => {
+    const response = await PUT(
+      putRequest({
+        categories: ["Music", 123],
+      } as never)
+    );
+
+    expect(response.status).toBe(400);
+  });
 });
